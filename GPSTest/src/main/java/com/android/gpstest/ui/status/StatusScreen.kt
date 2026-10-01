@@ -25,10 +25,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -88,27 +90,63 @@ fun StatusScreen(viewModel: SignalInfoViewModel) {
     val sbasStatuses: List<SatelliteStatus> by viewModel.filteredSbasStatuses.observeAsState(emptyList())
     val allStatuses: List<SatelliteStatus> by viewModel.allStatuses.observeAsState(emptyList())
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-    ) {
-        Column {
-            LocationCard(
-                location,
-                ttff,
-                altitudeMsl,
-                dop,
-                satelliteMetadata,
-                fixState)
-            if (gnssFilter(app, prefs).isNotEmpty()) {
-                Filter(allStatuses.size, satelliteMetadata) { PreferenceUtils.clearGnssFilter(app, prefs) }
+    val locationContent: @Composable () -> Unit = {
+        LocationCard(
+            location,
+            ttff,
+            altitudeMsl,
+            dop,
+            satelliteMetadata,
+            fixState)
+    }
+    val satelliteContent: @Composable () -> Unit = {
+        if (gnssFilter(app, prefs).isNotEmpty()) {
+            Filter(allStatuses.size, satelliteMetadata) { PreferenceUtils.clearGnssFilter(app, prefs) }
+        }
+        GnssStatusCard(gnssStatuses)
+        SbasStatusCard(sbasStatuses)
+    }
+
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        if (maxWidth >= SIDE_BY_SIDE_MIN_WIDTH) {
+            // Wide screens (landscape, tablets) - location on the left, satellites on the right,
+            // each scrolling independently
+            Row(modifier = Modifier.fillMaxSize()) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    locationContent()
+                }
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    satelliteContent()
+                }
             }
-            GnssStatusCard(gnssStatuses)
-            SbasStatusCard(sbasStatuses)
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                locationContent()
+                satelliteContent()
+            }
         }
     }
 }
+
+/**
+ * Minimum available width to show the location and satellite cards side by side - roughly the
+ * combined width of both cards without clipping
+ */
+private val SIDE_BY_SIDE_MIN_WIDTH = 600.dp
 
 @Composable
 fun Filter(totalNumSignals: Int, satelliteMetadata: SatelliteMetadata, onClick: () -> Unit) {
@@ -168,21 +206,15 @@ fun StatusCard(
     satStatuses: List<SatelliteStatus>,
     isGnss: Boolean,
 ) {
-    val modifier = Modifier
-        .fillMaxWidth()
-        .padding(5.dp)
-
-    if (showList(isGnss, satStatuses)) {
-        // Only scroll if we're showing satellites - we don't want "Not available" text to extend offscreen
-        modifier.horizontalScroll(rememberScrollState())
-    }
-
     Card(
-        modifier = modifier,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(5.dp),
         elevation = 2.dp
     ) {
         if (showList(isGnss, satStatuses)) {
-            Column {
+            // Only scroll if we're showing satellites - we don't want "Not available" text to extend offscreen
+            Column(modifier = Modifier.horizontalScroll(rememberScrollState())) {
                 StatusRowHeader(isGnss)
                 satStatuses.forEach {
                     StatusRow(it)
