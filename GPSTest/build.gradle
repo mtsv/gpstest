@@ -31,13 +31,13 @@ android {
         google {
             // Google Play release using Google Play Services for maps
             dimension "map"
-            applicationId "com.android.gpstest"
+            applicationId "com.taka.gpstest"
         }
 
         osmdroid {
             // F-Droid release using osmdroid for maps
             dimension "map"
-            applicationId "com.android.gpstest.osmdroid"
+            applicationId "com.taka.gpstest.osmdroid"
             dependenciesInfo {
                 includeInApk = false
                 includeInBundle = false
