@@ -23,8 +23,12 @@ import android.os.Bundle
 import android.preference.PreferenceManager
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
@@ -117,6 +121,9 @@ class MapFragment : Fragment(), MapInterface {
         mapController!!.restoreState(savedInstanceState, arguments, groundTruthMarker == null)
         map.invalidate()
 
+        // Only show the "center on my location" toolbar button on the Map tab, not Accuracy
+        setHasOptionsMenu(mapController!!.mode == MapConstants.MODE_MAP)
+
         Application.prefs.registerOnSharedPreferenceChangeListener(trackingListener)
 
         addMapClickListener()
@@ -170,6 +177,36 @@ class MapFragment : Fragment(), MapInterface {
     override fun onPause() {
         super.onPause()
         map!!.onPause()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        inflater.inflate(R.menu.map_menu, menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == R.id.center_on_location) {
+            centerOnMyLocation()
+            return true
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
+    /**
+     * Animates the map to the most recent location fix, zooming in if the map is zoomed out too
+     * far to see the surrounding streets
+     */
+    private fun centerOnMyLocation() {
+        val map = map ?: return
+        val position = myLocationMarker?.position
+        if (position == null) {
+            Toast.makeText(requireContext(), R.string.waiting_for_location, Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (map.zoomLevelDouble < MIN_CENTER_ZOOM) {
+            map.controller.animateTo(position, (MapConstants.CAMERA_INITIAL_ZOOM + 2).toDouble(), null)
+        } else {
+            map.controller.animateTo(position)
+        }
     }
 
     @ExperimentalCoroutinesApi
@@ -448,5 +485,7 @@ class MapFragment : Fragment(), MapInterface {
         private const val TAG = "GpsMapFragment"
         private const val MAP_TYPE_SATELLITE = "mapbox.satellite"
         private const val MAP_TYPE_STREETS = "barbeau/cju1g27421a0w1fmvsy13tjfv"
+        // Zoomed out further than this (roughly city level), centering also zooms back in
+        private const val MIN_CENTER_ZOOM = 15.0
     }
 }

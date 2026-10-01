@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Map tab - center on current location -->
+    <string name="menu_option_center_on_location">My location</string>
+    <string name="menu_option_center_on_location_content_description">Center map on current location</string>
+    <string name="waiting_for_location">Waiting for location…</string>
+</resources>

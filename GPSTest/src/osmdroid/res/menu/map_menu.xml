@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/center_on_location"
+        android:title="@string/menu_option_center_on_location"
+        android:icon="@drawable/ic_my_location_24"
+        android:orderInCategory="1"
+        app:showAsAction="ifRoom"
+        android:contentDescription="@string/menu_option_center_on_location_content_description" />
+</menu>
