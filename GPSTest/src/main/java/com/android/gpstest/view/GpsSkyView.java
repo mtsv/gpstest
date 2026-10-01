@@ -520,6 +520,11 @@ public class GpsSkyView extends View {
         // Use the width of the screen as the measured dimension for width and height of view
         // This allows other views in the same layout to be visible on the screen (#124)
         int specSize = MeasureSpec.getSize(widthMeasureSpec);
+        // If the parent bounds our height (e.g., landscape layout), fit the view within it too
+        int heightSize = MeasureSpec.getSize(heightMeasureSpec);
+        if (MeasureSpec.getMode(heightMeasureSpec) != MeasureSpec.UNSPECIFIED && heightSize > 0) {
+            specSize = Math.min(specSize, heightSize);
+        }
         setMeasuredDimension(specSize, specSize);
     }
 
